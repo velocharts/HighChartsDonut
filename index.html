@@ -1,0 +1,199 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
+    <title>
+      ETP Assets
+    </title>
+    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.2/jquery.min.js"></script>
+<script src="http://code.highcharts.com/highcharts.js"></script>
+<script src="http://code.highcharts.com/highcharts-more.js"></script>
+<script src="http://code.highcharts.com/modules/exporting.js"></script>
+	</head>
+	
+<script>
+
+$(function () {
+    
+        var colors = Highcharts.getOptions().colors,
+            categories = ['Equities', 'Fixed Income', 'Commodities'],
+			pids = ['first','second','third'],
+            name = 'Asset Classes',
+            data = [{
+                    y: 1530,
+					
+                    color: colors[2],
+                    drilldown: {
+                        name: 'Equities',
+                        categories: ['North America', 'Europe', 'Other', 'Global Ex-US', 'Global', 'Broad EM', 'Country EM', 'Regional EM'],
+                        data: [859, 143, 134, 92, 65, 116, 114, 8],
+				        color: colors[2]
+                    }
+                }, {
+                    y: 342,
+					parentId: 'second',
+                    color: colors[5],
+                    drilldown: {
+                        name: 'Fixed Income',
+                        categories: ['Inv. Grade', 'High Yield', 'Government', 'Other', 'Broad/Aggregate', 'Inflation', 'Emerging market'],
+                        data: [78, 36, 79, 65, 42, 29, 19],
+						color: colors[5]
+                    }
+                }, {
+                    y: 126,
+					parentId: 'third',
+                    color: colors[4],
+                    drilldown: {
+                        name: 'Commodities',
+                        categories: ['Gold', 'Broad Market', 'Silver', 'Other'],
+                        data: [79, 17, 11, 20],
+						id: 'third',
+                        color: colors[4]
+                    }
+                }];
+    
+    
+        // Build the data arrays
+        var assetData = [];
+        var subAssetData = [];
+        for (var i = 0; i < data.length; i++) {
+    
+            // add asset data
+            assetData.push({
+                name: categories[i],
+                y: data[i].y,
+                color: data[i].color,
+				parentID: pids[i]
+            });
+    
+            // add subasset data
+            for (var j = 0; j < data[i].drilldown.data.length; j++) {
+                var brightness = 0.2 - (j / data[i].drilldown.data.length) / 5 ;
+                subAssetData.push({
+                    name: data[i].drilldown.categories[j],
+                    y: data[i].drilldown.data[j],
+					id: pids[i],
+                    color: Highcharts.Color(data[i].color).brighten(brightness).get()
+                });
+            }
+        }
+    
+        // Create the chart
+        $('#container').highcharts({
+            chart: {
+                type: 'pie', 
+				renderTo: 'pie'
+            },
+        legend: {
+                title: {
+                    text: 'Asset Class<br/><span style="font-size: 14px; color: #666; font-weight: normal">(Click to hide)</span>',
+                    style: {
+                        //fontStyle: 'italic'
+						  fontSize: '16px', fontFamily: 'Arial, Helvetica, sans-serif', color: 'rgb(79, 78, 80)'
+                    }
+                },
+                layout: 'vertical',
+                align: 'right',
+                verticalAlign: 'top',
+                x: -30,
+				itemStyle: {
+                        //fontStyle: 'italic'
+						  fontSize: '14px', fontFamily: 'Arial, Helvetica, sans-serif', color: 'rgb(79, 78, 80)'
+                    },
+                y: 100
+            },
+			
+			  exporting: {
+            sourceWidth: 900,
+            sourceHeight: 500,
+            // scale: 2 (default)
+            chartOptions: {
+                subtitle: null
+            }
+        },
+			credits: {
+            text: 'Source: BlackRock',
+			style: { fontFamily: 'Arial, Helvetica, sans-serif'},
+            href: 'http://www.blackrock.com/corporate/en-us/news-and-insights/blackrock-investment-institute'
+        },
+			
+			title: {
+				style: { fontFamily: 'Arial, Helvetica, sans-serif', color: 'rgb(79, 78, 80)'},
+                text: 'ETP Assets - July 2013'
+            },
+            yAxis: {
+                title: {
+					style: { fontFamily: 'Arial, Helvetica, sans-serif'},
+                    text: 'Total percent market share'
+                }
+            },
+            plotOptions: {
+        pie: {
+            shadow: false,
+            center: ['50%', '50%']
+        },
+        series: {
+            point: {
+                events: {
+                    legendItemClick: function () {
+                        var id = this.parentID,
+                            data1 = this.series.chart.series[1].data;
+                        $.each(data1, function (i, point) {
+                           
+                            if (point.id == id) {
+                                if(point.visible)
+                                    point.setVisible(false);
+                                else
+                                    point.setVisible(true);
+                            }
+
+                        });
+                    }
+                }
+            }
+        }
+    },
+            tooltip: {
+        	    formatter: function() {
+                      
+                        return '<b>'+ this.point.name +':</b><br>' + 'Assets: $' 
+						+ this.y + 'bn<br>' + 'Share: ' + Math.round(this.percentage*100)/100 + '%'
+                    }
+            },
+            series: [{
+                name: 'Assets',
+                data: assetData,
+				showInLegend: true,
+                size: '60%',
+                dataLabels: {
+                    formatter: function() {
+                        return this.y > 5 ? this.point.name : null;
+                    },
+                    color: 'white',
+					style: { fontFamily: 'Arial, Helvetica, sans-serif', fontSize: '14px'},
+                    distance: -60
+                }
+            }, {
+                name: 'Assets',
+                data: subAssetData,
+                size: '80%',
+                innerSize: '60%',
+                dataLabels: {
+                    formatter: function() {
+                        // display only if larger than 1
+                        return this.percentage > 1 ?  '<b>'+ this.point.name +':</b> ' + '$' + this.y  +'bn'  : null;
+                    },
+						style: { fontFamily: 'Arial, Helvetica, sans-serif', color: 'rgb(79, 78, 80)'}
+                }
+            }]
+        });
+    });
+    
+
+
+</script>	
+	
+	
+	<div id="container" style="width:100%; height:500px;"></div>
+
+</html>
